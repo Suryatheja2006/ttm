@@ -3,7 +3,7 @@
 #include <span>
 #include <vector>
 // -----------------------------------------------------------------------------
-
+#include<math.h>
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
@@ -14,6 +14,12 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
         std::vector<int> &submission2) {
     // TODO: Write your code here
     std::array<int, 5> result = {0, 0, 0, 0, 0};
+
+    int l=std::min(submission1.size(),submission2.size());
+    for(int i=0;i<l;i++){
+        if(submission1[i]==submission2[i]) result[1]++;
+    }
+
     return result; // dummy return
     // End TODO
 }
