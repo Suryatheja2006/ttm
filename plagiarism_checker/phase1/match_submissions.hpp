@@ -4,12 +4,36 @@
 #include <vector>
 #include <cmath>
 // -----------------------------------------------------------------------------
-
+#include<map>
+#define CHUNK_SIZE 10
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
 
 // OPTIONAL: Add your helper functions and data structures here
+void hashing(std::vector<int> &v,std::vector<int> &h){
+
+    int l=v.size();
+
+    int p=31;
+    int M=1e9+7;
+
+    int curr=0;
+    int pow=1;
+    for(int i=CHUNK_SIZE-1;i>=0;i--){
+        curr=(curr+((long)v[i]*(long)pow)%M)%M;
+        if(i>0) pow=((long)pow*(long)p)%M;
+    }
+    h[0]=curr;
+    for(int i=1;i<=l-CHUNK_SIZE;i++){
+        h[i]=h[i-1];
+        h[i]=(h[i]-((long)v[i-1]*(long)pow)%M+M)%M;
+        if(h[i]<0 && i==1) std::cout<<"here"<<std::endl;
+        h[i]=((long)pow*(long)h[i])%M;
+        h[i]=(h[i]+v[i+CHUNK_SIZE-1])%M;
+    }
+    return;
+}
 
 std::array<int, 5> match_submissions(std::vector<int> &submission1, 
         std::vector<int> &submission2) {
@@ -20,13 +44,13 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     // for(int i=0;i<l;i++){
     //     if(submission1[i]==submission2[i]) result[1]++;
     // }
-    // std::cout<<"submission1 : "<<"size : "<<submission1.size()<<" and ";
-    // for(int x : submission1) std::cout<<x<<" ";
-    // std::cout<<std::endl;
+    // // std::cout<<"submission1 : "<<"size : "<<submission1.size()<<" and ";
+    // // for(int x : submission1) std::cout<<x<<" ";
+    // // std::cout<<std::endl;
 
-    // std::cout<<"submission2 : "<<"size : "<<submission2.size()<<" and ";
-    // for(int x : submission2) std::cout<<x<<" ";
-    // std::cout<<std::endl;
+    // // std::cout<<"submission2 : "<<"size : "<<submission2.size()<<" and ";
+    // // for(int x : submission2) std::cout<<x<<" ";
+    // // std::cout<<std::endl;
 
 
 
@@ -45,7 +69,7 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
 
     // std::vector<int> h2(l2-CHUNK_SIZE+1);
     // hashing(submission2,h2);
-    // int l=0;
+    // l=0;
     // for(int x : h2){
     //     if(hash1.find(x)!=hash1.end()){
     //         // std::cout<<"there"<<std::endl;
@@ -55,12 +79,12 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     //         // std::cout<<"here"<<std::endl;
     //         if(l!=0){
     //             result[1]+=CHUNK_SIZE+l-1;
-    //             std::cout<<"added"<<std::endl;
+    //             // std::cout<<"added"<<std::endl;
     //             l=0;
     //         }
     //     }
     // }
-    // std::cout<<l<<std::endl;
+    // // std::cout<<l<<std::endl;
     // if(l!=0){
     //     result[1]+=CHUNK_SIZE+l-1;
     //     l=0;
@@ -109,7 +133,9 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     std::vector<int> visited_row(l1,0),visited_column(l2,0);
 
     for(int i=0;i<l1;i++){
+        int pos_j=-1,max_length=0;
         for(int j=0;j<l2;j++){
+            if(visited_column[j]==1) continue;
             int pi=i,pj=j;
             int length=0;
             while(i<l1 && j<l2 && grid[i][j]==1){
@@ -117,27 +143,42 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
                 i++;
                 j++;
             }
-            if(length>=10){
-                for(int a=pi,b=pj;a<pi+length && b<pj+length;a++,b++){
-                    if(visited_row[a]==0 && visited_column[b]==0){
-                        result[1]++;
-                        visited_row[a]=1;
-                        visited_column[b]=1;
-                    }
-                }
-                i--;
-                break;
+            if(length>max_length){
+                pos_j=pj;
+                max_length=length;
             }
-            else{
-                i=pi;
-                j=pj;
-            }
+            i=pi;
         }
+        if(max_length>=10){
+            for(int a=i,b=pos_j;a<i+max_length && b<pos_j+max_length;a++,b++){
+                if(visited_row[a]==0 && visited_column[b]==0){
+                    result[1]++;
+                    visited_row[a]=1;
+                    visited_column[b]=1;
+                }
+            }
+            i=i+max_length-1;
+            // break;
+        }
+        // else{
+        //     i=pi;
+        //     j=pj;
+        // }
     }
 
-    
+    // std::vector<std::vector<int> > dp(l1,std::vector<int>(l2,-1))>;
+    // int max_length=0;
+    // for(int i=0;i<l1;i++){
+    //     for(int j=0;j<l2;j++){
+    //         if(i==0 || j==0) dp[i][j]=grid[i][j];
+    //         else if(dp[i][j]==1) dp[i][j]=dp[i-1][j-1]+1;
+            
+            
+    //     }
+    // }
 
-    // std::cout<<result[1]<<std::endl;
+
+    std::cout<<result[1]<<std::endl;
     return result; // dummy return
     // End TODO
 }
