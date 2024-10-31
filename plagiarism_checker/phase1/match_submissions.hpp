@@ -98,13 +98,13 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
         }
     }
 
-    for(std::vector<int> x : grid){
-        for(int y : x){
-            std::cout<<y<<" ";
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<"  "<<std::endl;
+    // for(std::vector<int> x : grid){
+    //     for(int y : x){
+    //         std::cout<<y<<" ";
+    //     }
+    //     std::cout<<std::endl;
+    // }
+    // std::cout<<"  "<<std::endl;
 
     std::vector<int> visited_row(l1,0),visited_column(l2,0);
 
@@ -137,7 +137,7 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
 
     
 
-    std::cout<<result[1]<<std::endl;
+    // std::cout<<result[1]<<std::endl;
     return result; // dummy return
     // End TODO
 }
