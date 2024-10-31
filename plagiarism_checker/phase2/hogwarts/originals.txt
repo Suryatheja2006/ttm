@@ -1,3 +1,0 @@
-0 HermioneGranger MinervaMcgonagall transform
-1 PadmaPatil SeverusSnape polyjuice
-3 HarryPotter AlbusDumbledore find_horcrux
