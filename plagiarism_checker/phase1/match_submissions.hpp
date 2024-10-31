@@ -90,13 +90,14 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     int l1=submission1.size();
     int l2=submission2.size();
 
-    std::vector<std::vector<int>> grid(l1,std::vector<int> (l2,0));
+    
+    // std::vector<std::vector<int>> grid(l1,std::vector<int> (l2,0));
 
-    for(int i=0;i<l1;i++){
-        for(int j=0;j<l2;j++){
-            if(submission1[i]==submission2[j]) grid[i][j]=1;
-        }
-    }
+    // for(int i=0;i<l1;i++){
+    //     for(int j=0;j<l2;j++){
+    //         if(submission1[i]==submission2[j]) grid[i][j]=1;
+    //     }
+    // }
 
     // for(std::vector<int> x : grid){
     //     for(int y : x){
@@ -106,34 +107,34 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     // }
     // std::cout<<"  "<<std::endl;
 
-    std::vector<int> visited_row(l1,0),visited_column(l2,0);
+    // std::vector<int> visited_row(l1,0),visited_column(l2,0);
 
-    for(int i=0;i<l1;i++){
-        for(int j=0;j<l2;j++){
-            int pi=i,pj=j;
-            int length=0;
-            while(i<l1 && j<l2 && grid[i][j]==1){
-                length++;
-                i++;
-                j++;
-            }
-            if(length>=10){
-                for(int a=pi,b=pj;a<pi+length && b<pj+length;a++,b++){
-                    if(visited_row[a]==0 && visited_column[b]==0){
-                        result[1]++;
-                        visited_row[a]=1;
-                        visited_column[b]=1;
-                    }
-                }
-                i--;
-                break;
-            }
-            else{
-                i=pi;
-                j=pj;
-            }
-        }
-    }
+    // for(int i=0;i<l1;i++){
+    //     for(int j=0;j<l2;j++){
+    //         int pi=i,pj=j;
+    //         int length=0;
+    //         while(i<l1 && j<l2 && grid[i][j]==1){
+    //             length++;
+    //             i++;
+    //             j++;
+    //         }
+    //         if(length>=10){
+    //             for(int a=pi,b=pj;a<pi+length && b<pj+length;a++,b++){
+    //                 if(visited_row[a]==0 && visited_column[b]==0){
+    //                     result[1]++;
+    //                     visited_row[a]=1;
+    //                     visited_column[b]=1;
+    //                 }
+    //             }
+    //             i--;
+    //             break;
+    //         }
+    //         else{
+    //             i=pi;
+    //             j=pj;
+    //         }
+    //     }
+    // }
 
     
 
