@@ -166,19 +166,47 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
         // }
     }
 
-    // std::vector<std::vector<int> > dp(l1,std::vector<int>(l2,-1))>;
-    // int max_length=0;
-    // for(int i=0;i<l1;i++){
-    //     for(int j=0;j<l2;j++){
-    //         if(i==0 || j==0) dp[i][j]=grid[i][j];
-    //         else if(dp[i][j]==1) dp[i][j]=dp[i-1][j-1]+1;
-            
-            
-    //     }
-    // }
+    std::vector<std::vector<int> > dp(l1,std::vector<int>(l2,-1));
+    std::vector<std::vector<int>> match(l1,std::vector<int> (l2,-1));
+    int max_length=0;
+    int pi=-1,pj=-1;
+    for(int i=0;i<l1;i++){
+        for(int j=0;j<l2;j++){
+            if(i==0 || j==0){
+                dp[i][j]=(submission1[i]==submission2[j]);
+                match[i][j]=(submission1[i]==submission2[j]);
+            }
+            else if(submission1[i]==submission2[j]){
+                dp[i][j]=dp[i-1][j-1]+1;
+                match[i][j]=match[i-1][j-1]+1;
+            }
+            else{
+                if(float(match[i-1][j-1])>=0.8*float(dp[i-1][j-1]+1)){
+                    dp[i][j]=dp[i-1][j-1]+1;
+                    match[i][j]=match[i-1][j-1];
+                }
+                else{
+                    dp[i][j]=0;
+                    match[i][j]=0;
+                }
+            }
+            if(dp[i][j]>max_length){
+                max_length=dp[i][j];
+                pi=i;
+                pj=j;
+            }
+        }
+    }
+    result[2]=max_length;
+    result[3]=pi-max_length+1;
+    result[4]=pj-max_length+1;
 
+    std::cout<<"result1 : "<<result[1]<<std::endl;
+    std::cout<<"result2 : "<<result[2]<<std::endl;
+    std::cout<<"result3 : "<<result[3]<<std::endl;
+    std::cout<<"result4 : "<<result[4]<<std::endl;
 
-    std::cout<<result[1]<<std::endl;
+    result[0]=1;
     return result; // dummy return
     // End TODO
 }
