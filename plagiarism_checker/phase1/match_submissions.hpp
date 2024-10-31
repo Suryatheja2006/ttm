@@ -167,6 +167,7 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
         // }
     }
 
+
     std::vector<std::vector<int> > dp(l1,std::vector<int>(l2,-1));
     std::vector<std::vector<int>> match(l1,std::vector<int> (l2,-1));
     int max_length=0;
@@ -180,6 +181,22 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
             else if(submission1[i]==submission2[j]){
                 dp[i][j]=dp[i-1][j-1]+1;
                 match[i][j]=match[i-1][j-1]+1;
+
+                // std::vector<int> matched (std::min(i-dp[i-1][j-1],j-dp[i-1][j-1]));
+                // int b=matched.size();
+                // for(int a=0;a<b;a++){
+                //     matched[b-a-1]=int(submission1[i-dp[i-1][j-1]-a-1]==submission2[j-dp[i-1][j-1]-a-1])+(a==0?0:matched[b-a]);
+                // }
+
+                // for(int a=0;a<b;a++){
+                //     if(0.8*float(b-a+dp[i][j])<=float(matched[a]+match[i][j])){
+                //         dp[i][j]+=b-a;
+                //         match[i][j]+=matched[a];
+                //         break;
+                //     }
+                // }
+
+
             }
             else{
                 if(float(match[i-1][j-1])>=0.8*float(dp[i-1][j-1]+1)){
@@ -202,6 +219,7 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
     result[3]=pi-max_length+1;
     result[4]=pj-max_length+1;
 
+    std::cout<<l1<<" "<<l2<<std::endl;
     std::cout<<"result1 : "<<result[1]<<std::endl;
     std::cout<<"result2 : "<<result[2]<<std::endl;
     std::cout<<"result3 : "<<result[3]<<std::endl;
