@@ -4,9 +4,9 @@
 #include <vector>
 #include <cmath>
 // -----------------------------------------------------------------------------
-// #include<map>
+
 #include<algorithm>
-#define CHUNK_SIZE 10
+
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
@@ -185,7 +185,7 @@ std::array<int, 5> match_submissions(std::vector<int> &submission1,
 
     approx_match_length(result,submission2,submission1,true);
     approx_match_length(result,submission1,submission2,false);
-    // std::cout<<l1<<" "<<l2<<std::endl;
+
     // bench mark to flag it to be plagiarized
     if((float(result[1])/float(std::min(l1,l2)))>0.25 || float(result[2])/float(std::min(l1,l2))>0.3 ) result[0]=1;
 
