@@ -1,6 +1,10 @@
 #include "structures.hpp"
 // -----------------------------------------------------------------------------
-
+#include<thread>
+#include<chrono>
+#include<mutex>
+#include<unordered_map>
+#include<map>
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
@@ -18,6 +22,7 @@ public:
 
 protected:
     // TODO: Add members and function signatures here
-    
+    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database;
+    std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp;
     // End TODO
 };
