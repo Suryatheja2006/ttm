@@ -9,6 +9,8 @@ main: main.cpp plagiarism_checker.cpp tokenizer.cpp
 	rm -rf *.dSYM
 	./main hogwarts > output.txt
 	diff -Bw hogwarts/expected.txt output.txt
+	./main ainur > output.txt
+	diff -Bw ainur/expected.txt output.txt
 
 clean:
 	rm -rf main output.txt *.dSYM
