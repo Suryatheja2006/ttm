@@ -24,7 +24,7 @@ plagiarism_checker_t::plagiarism_checker_t(std::vector<std::shared_ptr<submissio
 }
 
 plagiarism_checker_t::~plagiarism_checker_t(void){
-   {
+    {
         std::lock_guard<std::mutex> lock(queue_mutex);
         stop = true; // Signal the thread to stop
     }
@@ -32,7 +32,9 @@ plagiarism_checker_t::~plagiarism_checker_t(void){
     if (worker.joinable()) {
         worker.join(); // Wait for the thread to finish
     }
-    // if(threads.joinable()) threads.join();
+
+    // // if(threads.joinable()) threads.join();
+    
     timestamp.clear();
     database.clear();
 }
@@ -179,6 +181,7 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
     // std::cout<<"hello"<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(1));
     // std::cout<<"here at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
+    
     std::unordered_map<std::shared_ptr<submission_t>, std::vector<int>> local_database;
     std::unordered_map<std::shared_ptr<submission_t>, time_t> local_timestamp;
 
