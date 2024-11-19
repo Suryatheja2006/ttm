@@ -102,6 +102,7 @@ void testcase::execute_testcase(std::string __test_dir) {
         checker.add_submission(submission);
         old_timestamp = timestamp;
     }
+    // usleep(3*1000000);
     in.close();
 }
 

@@ -2,6 +2,8 @@
 // You should NOT add ANY other includes to this file.
 // Do NOT add "using namespace std;".
 
+// docker run --rm -it -v .:/plagiarism_checker plagiarism_checker
+
 // TODO: Implement the methods of the plagiarism_checker_t class
 typedef long long ll;
 typedef __int128_t vl;
@@ -20,6 +22,7 @@ plagiarism_checker_t::plagiarism_checker_t(std::vector<std::shared_ptr<submissio
 }
 
 plagiarism_checker_t::~plagiarism_checker_t(void){
+    if(threads.joinable()) threads.join();
     timestamp.clear();
     database.clear();
 }
@@ -88,6 +91,7 @@ int flag(std::vector<int> & submission1,std::vector<int> & submission2){
 
             if(result>=10) return 1;
             i=pi;
+            j=pj;
         }
         // if(max_length>=75) return 1;
         // if(max_length>=15){
@@ -135,14 +139,23 @@ int flag(std::vector<int> & submission1,std::vector<int> & submission2){
     // return 0;
 }
 
-void check_plagiarism(std::unordered_map<std::shared_ptr<submission_t>,std::vector<int>> database,
-                        std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp,
-                        std::shared_ptr<submission_t> __submission){
+void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission){
     // std::cout<<"hello"<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(1));
     // std::cout<<"here at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
+    std::unordered_map<std::shared_ptr<submission_t>, std::vector<int>> local_database;
+    std::unordered_map<std::shared_ptr<submission_t>, time_t> local_timestamp;
 
+    {
+    //     // Lock to safely copy shared resources
+        std::lock_guard<std::mutex> lock(db_mutex);
+        // local_database = database;  // Make local copies to reduce lock contention
+        // local_timestamp = timestamp;
+    //     return;
+    
+    
     for(auto i : database){
+        break;
         if((i.first!=__submission) && (timestamp[i.first]<=timestamp[__submission])){
             if(flag(i.second,database[__submission])==1){
                 __submission->student->flag_student(__submission);
@@ -151,34 +164,44 @@ void check_plagiarism(std::unordered_map<std::shared_ptr<submission_t>,std::vect
                     i.first->student->flag_student(i.first);
                     i.first->professor->flag_professor(i.first);
                 }
-                return;
+                break;
             }
-
         }
     }
+    }
+    return;
     // std::cout<<"there"<<std::endl;
 
 }
+
+// std::shared_ptr<plagiarism_checker_t> plagiarism_checker_t::shared_from_this(){
+//     return std::shared_ptr<plagiarism_checker_t>(this);
+// }
 
 void plagiarism_checker_t::add_submission(std::shared_ptr<submission_t> __submission){
     // auto now = std::chrono::system_clock::now();
     // std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     // std::cout << "Current time: " << std::ctime(&now_c);
-    timestamp[__submission]=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    database[__submission]=tokenizer_t(__submission->codefile).get_tokens();
+    {
+        std::lock_guard<std::mutex> lock(db_mutex);
+        timestamp[__submission]=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        database[__submission]=tokenizer_t(__submission->codefile).get_tokens();
+    }
     // std::cout<<tokens.size()<<std::endl;
 
-    std::mutex db_mutex;
-    std::lock_guard<std::mutex> lock(db_mutex);
-
-    std::thread(&check_plagiarism,database,timestamp,__submission).detach();
+    
+    if(threads.joinable()) threads.join();
+    threads=std::thread(&plagiarism_checker_t::check_plagiarism,this,__submission);
+    threads.detach();
+    // check_plagiarism(database,timestamp,__submission);
     // std::cout<<"here"<<std::endl;
     // std::cout<<"detached at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(3));
 
+    // auto self = shared_from_this(); // Create a shared pointer to `this`
+    // std::thread([self, __submission]() {
+    //     self->check_plagiarism(__submission); // Use shared pointer to keep `this` alive
+    // }).detach();
 }
-
-
-
 
 // End TODO

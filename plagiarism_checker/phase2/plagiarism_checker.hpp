@@ -11,7 +11,7 @@
 
 // OPTIONAL: Add your helper functions and classes here
 
-class plagiarism_checker_t {
+class plagiarism_checker_t : public std::enable_shared_from_this<plagiarism_checker_t>{
     // You should NOT modify the public interface of this class.
 public:
     plagiarism_checker_t(void);
@@ -24,5 +24,9 @@ protected:
     // TODO: Add members and function signatures here
     std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database;
     std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp;
+    std::mutex db_mutex;
+    void check_plagiarism(std::shared_ptr<submission_t> __submission);
+    std::shared_ptr<plagiarism_checker_t> shared_from_this();
+    std::thread threads;
     // End TODO
 };
