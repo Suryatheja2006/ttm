@@ -27,6 +27,7 @@ public:
 
 protected:
     // TODO: Add members and function signatures here
+    std::unordered_map<std::shared_ptr<submission_t>,bool> flagged;
     std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_1;
     std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_2;
     std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp;
@@ -41,5 +42,7 @@ protected:
     bool stop; // Flag to signal the thread to stop
     void add_task(std::function<void()> task); // Add a task to the queue
     void worker_thread(); // Worker thread function 
+
+    
     // End TODO
 };
