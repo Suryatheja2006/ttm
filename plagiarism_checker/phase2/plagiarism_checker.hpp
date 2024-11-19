@@ -5,6 +5,10 @@
 #include<mutex>
 #include<unordered_map>
 #include<map>
+#include <queue>
+#include <condition_variable>
+#include <functional>
+#include <memory>
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
@@ -24,9 +28,16 @@ protected:
     // TODO: Add members and function signatures here
     std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database;
     std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp;
-    std::mutex db_mutex;
+    // std::mutex db_mutex;
     void check_plagiarism(std::shared_ptr<submission_t> __submission);
-    std::shared_ptr<plagiarism_checker_t> shared_from_this();
-    std::thread threads;
+    // std::thread threads;
+
+    std::thread worker; // Single worker thread
+    std::queue<std::function<void()>> task_queue; // Task queue
+    std::mutex queue_mutex; // Protects the task queue
+    std::condition_variable cv; // For thread synchronization
+    bool stop; // Flag to signal the thread to stop
+    void add_task(std::function<void()> task); // Add a task to the queue
+    void worker_thread(); // Worker thread function 
     // End TODO
 };

@@ -18,15 +18,51 @@ plagiarism_checker_t::plagiarism_checker_t(std::vector<std::shared_ptr<submissio
         tokenizer_t tokenizer(i->codefile);
         database[i]=tokenizer.get_tokens();
     }
+    stop=false;
+    worker = std::thread(&plagiarism_checker_t::worker_thread, this);
     // std::cout<<__submissions.size()<<" "<<timestamp.size()<<" "<<database.size()<<std::endl;
 }
 
 plagiarism_checker_t::~plagiarism_checker_t(void){
-    if(threads.joinable()) threads.join();
+   {
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        stop = true; // Signal the thread to stop
+    }
+    cv.notify_one(); // Wake up the worker thread
+    if (worker.joinable()) {
+        worker.join(); // Wait for the thread to finish
+    }
+    // if(threads.joinable()) threads.join();
     timestamp.clear();
     database.clear();
 }
+void plagiarism_checker_t::worker_thread() {
+    while (true) {
+        std::function<void()> task;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            cv.wait(lock, [this]() { return stop || !task_queue.empty(); });
 
+            if (stop && task_queue.empty()) {
+                return; // Exit the thread if stop is signaled and no tasks remain
+            }
+            
+            task = std::move(task_queue.front());
+            task_queue.pop();
+        }
+
+        // Execute the task
+        task();
+    }
+}
+void plagiarism_checker_t::add_task(std::function<void()> task) {
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        task_queue.push(std::move(task));
+    }
+    cv.notify_one(); // Notify the worker thread of the new task
+    // worker.detach();
+}
 // void hashing(std::vector<int> & submission,std::map<ll,int> & hash_map,int chunk){
 //     int length=submission.size();
 //     // std::cout<<"surya "<<length<<" "<<chunk<<std::endl;
@@ -148,19 +184,18 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
 
     {
     //     // Lock to safely copy shared resources
-        std::lock_guard<std::mutex> lock(db_mutex);
-        // local_database = database;  // Make local copies to reduce lock contention
-        // local_timestamp = timestamp;
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        local_database = database;  // Make local copies to reduce lock contention
+        local_timestamp = timestamp;
     //     return;
-    
-    
-    for(auto i : database){
-        break;
-        if((i.first!=__submission) && (timestamp[i.first]<=timestamp[__submission])){
-            if(flag(i.second,database[__submission])==1){
+    }
+    // cv.notify_one();
+    for(auto i : local_database){
+        if((i.first!=__submission) && (local_timestamp[i.first]<=local_timestamp[__submission])){
+            if(flag(i.second,local_database[__submission])==1){
                 __submission->student->flag_student(__submission);
                 __submission->professor->flag_professor(__submission);
-                if((timestamp[__submission]-timestamp[i.first])<1){
+                if((local_timestamp[__submission]-local_timestamp[i.first])<1){
                     i.first->student->flag_student(i.first);
                     i.first->professor->flag_professor(i.first);
                 }
@@ -168,7 +203,7 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
             }
         }
     }
-    }
+    
     return;
     // std::cout<<"there"<<std::endl;
 
@@ -183,17 +218,27 @@ void plagiarism_checker_t::add_submission(std::shared_ptr<submission_t> __submis
     // std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     // std::cout << "Current time: " << std::ctime(&now_c);
     {
-        std::lock_guard<std::mutex> lock(db_mutex);
+
+        std::lock_guard<std::mutex> lock(queue_mutex);
         timestamp[__submission]=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         database[__submission]=tokenizer_t(__submission->codefile).get_tokens();
     }
-    // std::cout<<tokens.size()<<std::endl;
+    // cv.notify_one();
+    add_task([this, __submission]() { plagiarism_checker_t::check_plagiarism(__submission); });
+
+    // plagiarism_checker_t::check_plagiarism(__submission);
+
+
+    // // std::cout<<tokens.size()<<std::endl;
 
     
-    if(threads.joinable()) threads.join();
-    threads=std::thread(&plagiarism_checker_t::check_plagiarism,this,__submission);
-    threads.detach();
-    // check_plagiarism(database,timestamp,__submission);
+    // if(threads.joinable()) threads.join();
+    // threads=std::thread(&plagiarism_checker_t::check_plagiarism,this,__submission);
+    // threads.detach();
+
+
+
+
     // std::cout<<"here"<<std::endl;
     // std::cout<<"detached at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(3));
