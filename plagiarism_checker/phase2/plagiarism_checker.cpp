@@ -51,8 +51,8 @@ void hashing(std::vector<int> & submission,std::unordered_map<ll,int> & hash_map
         // if(hash[i]<0) std::cout<<"surya"<<std::endl;
     }
     std::vector<ll> winnowed_hash;
-    winnowing(10,hash,winnowed_hash);
-    for(ll x : winnowed_hash){
+    // winnowing(10,hash,winnowed_hash);
+    for(ll x : hash){
         // std::cout<<x<<" ";
         hash_map[x]++;
     }
@@ -65,11 +65,13 @@ plagiarism_checker_t::plagiarism_checker_t(void){
 plagiarism_checker_t::plagiarism_checker_t(std::vector<std::shared_ptr<submission_t>> 
                             __submissions){
     for(auto i : __submissions){
-        timestamp[i]=0;
+        timestamp[i]=std::chrono::time_point<std::chrono::high_resolution_clock>{};
         tokenizer_t tokenizer(i->codefile);
         std::vector<int> tokens=tokenizer.get_tokens();
-        hashing(tokens,database_1[i],75);
+        database_1[i]=tokens;
         hashing(tokens,database_2[i],15);
+        // std::cout<<tokens.size()<<" "<<database_1[i].size()<<" "<<database_2[i].size()<<std::endl;
+
         // flagged[i]=false;
     }
     stop=false;
@@ -121,122 +123,125 @@ void plagiarism_checker_t::add_task(std::function<void()> task) {
     // worker.detach();
 }
 
-// int flag(std::vector<int> & submission1,std::vector<int> & submission2){
-//     int l1=submission1.size();
-//     int l2=submission2.size();
-//     // // std::cout<<l1<<" "<<l2<<std::endl;
-//     // // submission1=std::vector<int> (10000);
-//     // // submission2=std::vector<int> (10000);
-//     // // for(int i=0;i<10000;i++){
-//     // //     submission1[i]=i+1;
-//     // //     submission2[i]=i+10001;
-//     // // }
-//     // // std::vector<int> counted_index(l2,0);
-//     // int result=0;
-//     // for(int i=0;i<l1;i++){
-//     //     // position and max matched length for this index i in the second vector
-//     //     // int pos_j=-1;
-//     //     // int max_length=0; 
-//     //     for(int j=0;j<l2;j++){
-//     //         // vars to store initial values
-//     //         int pi=i,pj=j; 
-//     //         int length=0;
-//     //         while(i<l1 && j<l2 && (submission1[i]==submission2[j])){
-//     //             length++;
-//     //             i++;
-//     //             j++;
-//     //         }
-//     //         // if(length>max_length){
-//     //         //     // pos_j=pj;
-//     //         //     max_length=length;
-//     //         // }
-//     //         if(length>=75) return 1;
-//     //         if(length>=15) result++;
+int flagging(std::vector<int> & submission1,std::vector<int> & submission2){
+    int l1=submission1.size();
+    int l2=submission2.size();
+    // std::cout<<l1<<" "<<l2<<std::endl;
+    // submission1=std::vector<int> (10000);
+    // submission2=std::vector<int> (10000);
+    // for(int i=0;i<10000;i++){
+    //     submission1[i]=i+1;
+    //     submission2[i]=i+10001;
+    // }
+    std::vector<int> counted_index(l2,0);
+    int result=0;
+    for(int i=0;i<l1;i++){
+        // position and max matched length for this index i in the second vector
+        int pos_j=-1;
+        int max_length=0; 
 
-//     //         if(result>=10) return 1;
-//     //         i=pi;
-//     //         j=pj;
-//     //     }
-//     //     // if(max_length>=75) return 1;
-//     //     // if(max_length>=15){
-//     //     //     // for(int a=i,b=pos_j;a<i+max_length && b<pos_j+max_length;a++,b++){
-//     //     //     //     if(counted_index[b]==0){
-//     //     //     //         result++;
-//     //     //     //         counted_index[b]=1;
-//     //     //     //     }
-//     //     //     // }
-//     //     //     result++;
-//     //     //     // we are not visiting the indices of first vector which are already counted above
-//     //     //     // i=i+max_length-1;
-//     //     // }
-//     // }
-//     // return 0;
+        for(int j=0;j<l2;j++){
+            // vars to store initial values
+            int pi=i,pj=j; 
+            int length=0;
+            while(i<l1 && j<l2 && (submission1[i]==submission2[j])){
+                length++;
+                i++;
+                j++;
+            }
+            if(length>max_length){
+                pos_j=pj;
+                max_length=length;
+            }
+            if(length>=75) return 1;
+            // if(length>=15) result++;
 
-//     std::unordered_map<ll,int> hash_1,hash_2;
-//     if(l1>=75 && l2>=75){
-//         hashing(submission1,hash_1,75);
-//         hashing(submission2,hash_2,75);
-//         for(auto i : hash_1){
-//             if(hash_2.contains(i.first)){
+            // if(result>=10) return 1;
+            i=pi;
+            j=pj;
+        }
+        // if(max_length>=75) return 1;
+        if(max_length>=15){
+            for(int a=i,b=pos_j;a<i+max_length && b<pos_j+max_length;a++,b++){
+                if(counted_index[b]==0){
+                    result++;
+                    counted_index[b]=1;
+                }
+            }
+            // result++;
+            // we are not visiting the indices of first vector which are already counted above
+            i=i+max_length-1;
+        } 
+        if(result>=150) return 1;
+    }
+    return 0;
+
+    // std::unordered_map<ll,int> hash_1,hash_2;
+    // if(l1>=75 && l2>=75){
+    //     hashing(submission1,hash_1,75);
+    //     hashing(submission2,hash_2,75);
+    //     for(auto i : hash_1){
+    //         if(hash_2.contains(i.first)){
+    //             // std::cout<<i.first<<" "<<hash_1[i.first]<<" "<<hash_2[i.first]<<std::endl;
+    //             // std::cout<<"here"<<std::endl;
+    //             return 1;
+    //         }
+    //     }
+    // }
+    // hash_1.clear();
+    // hash_2.clear();
+    // hashing(submission1,hash_1,15);
+    // hashing(submission2,hash_2,15);
+    // int count=0;
+    // for(auto i : hash_1){
+    //     if(hash_2.contains(i.first)){
+    //         // std::cout<<"atleast once"<<std::endl;
+    //         count+=hash_1[i.first]*hash_2[i.first];
+    //     }
+    //     if(count>=10){
+    //         // std::cout<<"there"<<std::endl;
+    //         return 1;
+    //     }
+    // }
+    // // std::cout<<count<<std::endl;
+    // return 0;
+}
+
+// int flagging(std::unordered_map<ll,int> ld11,std::unordered_map<ll,int> ld12,std::unordered_map<ll,int> ld21, std::unordered_map<ll,int> ld22){
+    
+//     if(!ld11.empty() && !ld21.empty()){
+//         for(auto i : ld11){
+//             if(ld21.contains(i.first)){
 //                 // std::cout<<i.first<<" "<<hash_1[i.first]<<" "<<hash_2[i.first]<<std::endl;
 //                 // std::cout<<"here"<<std::endl;
 //                 return 1;
 //             }
 //         }
 //     }
-//     hash_1.clear();
-//     hash_2.clear();
-//     hashing(submission1,hash_1,15);
-//     hashing(submission2,hash_2,15);
+
 //     int count=0;
-//     for(auto i : hash_1){
-//         if(hash_2.contains(i.first)){
+//     for(auto i : ld12){
+//         if(ld22.contains(i.first)){
 //             // std::cout<<"atleast once"<<std::endl;
-//             count+=hash_1[i.first]*hash_2[i.first];
+//             count+=ld12[i.first]*ld22[i.first];
+//             // std::cout<<count<<std::endl;
 //         }
 //         if(count>=10){
-//             // std::cout<<"there"<<std::endl;
+//             // std::cout<<"there "<<count<<std::endl;
 //             return 1;
 //         }
 //     }
-//     // std::cout<<count<<std::endl;
+
 //     return 0;
 // }
-
-int flagging(std::unordered_map<ll,int> ld11,std::unordered_map<ll,int> ld12,std::unordered_map<ll,int> ld21, std::unordered_map<ll,int> ld22){
-    
-    if(!ld11.empty() && !ld21.empty()){
-        for(auto i : ld11){
-            if(ld21.contains(i.first)){
-                // std::cout<<i.first<<" "<<hash_1[i.first]<<" "<<hash_2[i.first]<<std::endl;
-                // std::cout<<"here"<<std::endl;
-                return 1;
-            }
-        }
-    }
-
-    int count=0;
-    for(auto i : ld12){
-        if(ld22.contains(i.first)){
-            // std::cout<<"atleast once"<<std::endl;
-            count+=ld12[i.first]*ld22[i.first];
-        }
-        if(count>=10){
-            // std::cout<<"there"<<std::endl;
-            return 1;
-        }
-    }
-
-    return 0;
-}
 
 void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission){
     // std::cout<<"hello"<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(1));
     // std::cout<<"here at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
-    
-    std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > local_database_1,local_database_2;
-    std::unordered_map<std::shared_ptr<submission_t>, time_t> local_timestamp;
+    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int>> local_database_1;
+    std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > local_database_2;
+    std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> local_timestamp;
     // std::unordered_map<std::shared_ptr<submission_t>,bool> local_flagged;
     {
     //     // Lock to safely copy shared resources
@@ -250,15 +255,17 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
     // cv.notify_one();
     for(auto i : local_database_1){
         if((i.first!=__submission) && (local_timestamp[i.first]<=local_timestamp[__submission])){
-            if((!flagged[__submission] || ((local_timestamp[__submission]-local_timestamp[i.first])<1 && !flagged[i.first])) && (flagging(i.second,local_database_2[i.first],local_database_1[__submission],local_database_2[__submission])==1)){
+            if(((!flagged[__submission]) || ((std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000) && (!flagged[i.first]))) && (flagging(i.second,local_database_1[__submission])==1)){
                 if(!flagged[__submission]){
+                    // std::cout<<local_timestamp[__submission]<<std::endl;
                     __submission->student->flag_student(__submission);
                     __submission->professor->flag_professor(__submission);
                     flagged[__submission]=true;
                 }
 
-                if((local_timestamp[__submission]-local_timestamp[i.first])<1){
+                if(std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000){
                     if(!flagged[i.first]){
+                        // std::cout<<"previous one"<<std::endl;
                         i.first->student->flag_student(i.first);
                         i.first->professor->flag_professor(i.first);
                         flagged[i.first]=true;
@@ -285,10 +292,13 @@ void plagiarism_checker_t::add_submission(std::shared_ptr<submission_t> __submis
     {
 
         std::lock_guard<std::mutex> lock(queue_mutex);
-        timestamp[__submission]=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        timestamp[__submission]=std::chrono::high_resolution_clock::now();
+        // std::cout<<timestamp[__submission]<<std::endl;
         std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
-        hashing(tokens,database_1[__submission],75);
+        // hashing(tokens,database_1[__submission],75);
+        database_1[__submission]=tokens;
         hashing(tokens,database_2[__submission],15);
+        // std::cout<<tokens.size()<<" "<<database_1[__submission].size()<<" "<<database_2[__submission].size()<<std::endl;
     }
     // cv.notify_one();
     add_task([this, __submission]() { plagiarism_checker_t::check_plagiarism(__submission); });

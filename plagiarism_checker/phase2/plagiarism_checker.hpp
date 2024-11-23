@@ -28,9 +28,9 @@ public:
 protected:
     // TODO: Add members and function signatures here
     std::unordered_map<std::shared_ptr<submission_t>,bool> flagged;
-    std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_1;
+    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database_1;
     std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_2;
-    std::unordered_map<std::shared_ptr<submission_t>, time_t> timestamp;
+    std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> timestamp;
     // std::mutex db_mutex;
     void check_plagiarism(std::shared_ptr<submission_t> __submission);
     // std::thread threads;
