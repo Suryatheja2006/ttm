@@ -8,6 +8,51 @@
 // typedef uint64_t ll;
 // typedef __uint128_t vl;
 
+#define BIG_CONSTANT(x) (x##LLU)
+
+uint64_t MurmurHash64A ( const void * key, int len, uint64_t seed )
+{
+  const uint64_t m = BIG_CONSTANT(0xc6a4a7935bd1e995);
+  const int r = 47;
+
+  uint64_t h = seed ^ (len * m);
+
+  const uint64_t * data = (const uint64_t *)key;
+  const uint64_t * end = data + (len/8);
+
+  while(data != end)
+  {
+    uint64_t k = *data++;
+
+    k *= m; 
+    k ^= k >> r; 
+    k *= m; 
+    
+    h ^= k;
+    h *= m; 
+  }
+
+  const unsigned char * data2 = (const unsigned char*)data;
+
+  switch(len & 7)
+  {
+  case 7: h ^= uint64_t(data2[6]) << 48;
+  case 6: h ^= uint64_t(data2[5]) << 40;
+  case 5: h ^= uint64_t(data2[4]) << 32;
+  case 4: h ^= uint64_t(data2[3]) << 24;
+  case 3: h ^= uint64_t(data2[2]) << 16;
+  case 2: h ^= uint64_t(data2[1]) << 8;
+  case 1: h ^= uint64_t(data2[0]);
+          h *= m;
+  };
+ 
+  h ^= h >> r;
+  h *= m;
+  h ^= h >> r;
+
+  return h;
+} 
+
 void winnowing(int w, std::vector<ll> & submission,std::vector<ll> & fingerprints){
     int minPos = -1;
 
@@ -32,30 +77,46 @@ void hashing(std::vector<int> & submission,std::unordered_set<ll> & hash_map,std
     // std::cout<<"surya "<<length<<" "<<chunk<<std::endl;
     if(chunk>length) return;
     hash=std::vector<ll>(length-chunk+1);
-    int prime=31;
-    ll modulo=(1LL<<61)-1;
+    for(int i=0;i<length-chunk+1;i++){
+        if(chunk==15){
+            ll a[15];
+            for(int j=0;j<chunk;j++){
+                a[j]=submission[i+j];
+                hash[i]=MurmurHash64A(a,chunk,42);
+        }
+        }
+        if(chunk==75){
+            ll a[75];
+            for(int j=0;j<chunk;j++){
+                a[j]=submission[i+j];
+                hash[i]=MurmurHash64A(a,chunk,42);
+        }
+        }
+    }
+    // int prime=31;
+    // ll modulo=(1LL<<61)-1;
 
-    ll curr=0;
-    ll pow=1;
-    for(int i=chunk-1;i>=0;i--){
-        curr=(curr+((vl)submission[i]*(vl)(pow))%modulo)%modulo;
-        if(i>0) pow=((vl)pow*(vl)prime)%modulo;
-    }
-    hash[0]=curr;
-    // if(hash[0]<0) std::cout<<"surya"<<std::endl;
-    for(int i=1;i<=length-chunk;i++){
-        hash[i]=hash[i-1];
-        hash[i]=(hash[i]-((vl)submission[i-1]*(vl)pow)%modulo+modulo)%modulo;
-        hash[i]=((vl)prime*(vl)hash[i])%modulo;
-        hash[i]=(hash[i]+(ll)submission[i+chunk-1])%modulo;
-        // if(hash[i]<0) std::cout<<"surya"<<std::endl;
-    }
-    std::vector<ll> winnowed_hash;
-    // winnowing(10,hash,winnowed_hash);
-    for(ll x : hash){
-        // std::cout<<x<<" ";
-        hash_map.insert(x);
-    }
+    // ll curr=0;
+    // ll pow=1;
+    // for(int i=chunk-1;i>=0;i--){
+    //     curr=(curr+((vl)submission[i]*(vl)(pow))%modulo)%modulo;
+    //     if(i>0) pow=((vl)pow*(vl)prime)%modulo;
+    // }
+    // hash[0]=curr;
+    // // if(hash[0]<0) std::cout<<"surya"<<std::endl;
+    // for(int i=1;i<=length-chunk;i++){
+    //     hash[i]=hash[i-1];
+    //     hash[i]=(hash[i]-((vl)submission[i-1]*(vl)pow)%modulo+modulo)%modulo;
+    //     hash[i]=((vl)prime*(vl)hash[i])%modulo;
+    //     hash[i]=(hash[i]+(ll)submission[i+chunk-1])%modulo;
+    //     // if(hash[i]<0) std::cout<<"surya"<<std::endl;
+    // }
+    // std::vector<ll> winnowed_hash;
+    // // winnowing(10,hash,winnowed_hash);
+    // for(ll x : hash){
+    //     // std::cout<<x<<" ";
+    //     hash_map.insert(x);
+    // }
     // std::cout<<std::endl;
     return;
 }
@@ -260,33 +321,39 @@ int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
     int match_length=0;
     int l=0;
     int start=0;
-    std::vector<int> pattern;
+    // std::vector<int> pattern;
+    std::unordered_set<ll> visited_hashes;
+    std::vector<ll> visited_hash;
     int chunk=15;
     for(int i=0;i<hash.size();i++){
         // std::cout<<"there "<<i<<" "<<hash.size()<<std::endl;
         
-        if(database.contains(hash[i])){
+        if(database.contains(hash[i]) && (!(visited_hashes.contains(hash[i])))){
             // std::cout<<"surya"<<std::endl;
             l++;
-            if(start==0){
-                for(int j=0;j<15;j++) pattern.push_back(tokens[i+j]);
-                start=1;
-            }
-            else pattern.push_back(tokens[i+14]);
+            // if(start==0){
+            //     for(int j=0;j<15;j++) pattern.push_back(tokens[i+j]);
+            //     start=1;
+            // }
+            // else pattern.push_back(tokens[i+14]);
+            visited_hash.push_back(hash[i]);
         }
         else if(l!=0){
-            ll hv=new_hashing(pattern);
-            if(!patterns_matched.contains(hv)) match_length+=l+chunk-1;
+            // ll hv=new_hashing(pattern);
+            // if(!patterns_matched.contains(hv)) match_length+=l+chunk-1;
 
-            patterns_matched.insert(hv);
+            // patterns_matched.insert(hv);
             l=0;
-            start=0;
-            pattern.clear();
+            match_length+=l+chunk-1;
+            for(int x : visited_hash) visited_hashes.insert(x);
+            visited_hash.clear();
+            // start=0;
+            // pattern.clear();
         }
     }
     if(l!=0) match_length+=l+chunk-1;
     // std::cout<<match_length<<std::endl;
-    if(match_length>=212) return 1;
+    if(match_length>=272) return 1;
 
     std::vector<ll> hash_large;
     hashing(tokens,dummy,hash_large,75);
@@ -361,14 +428,14 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
     // std::cout<<"one_sec size"<<one_sec.size()<<std::endl;
     while(!copy.empty()){
         if(flagging(tokens,copy.front().second)==1){
-            if(!flagged[__submission]){
-                __submission->student->flag_student(__submission);
-                __submission->professor->flag_professor(__submission);
-            }
             if(!flagged[copy.front().first]){
                 // std::cout<<"surya"<<std::endl;
                 copy.front().first->student->flag_student(copy.front().first);
                 copy.front().first->professor->flag_professor(copy.front().first);
+            }
+            if(!flagged[__submission]){
+                __submission->student->flag_student(__submission);
+                __submission->professor->flag_professor(__submission);
             }
         }
         copy.pop();

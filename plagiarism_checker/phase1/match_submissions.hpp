@@ -72,7 +72,7 @@ int total_exact_matched_length(std::vector<int> & submission1,std::vector<int> &
     // std::vector<int> pattern;
     std::vector<ll> visited_hash;
     for(int i=0;i<hash_2.size();i++){
-        if(hash.contains(hash_2[i]) && !hash.contains(visited_hashes)){
+        if(hash.contains(hash_2[i]) && (!(visited_hashes.contains(hash_2[i])))){
             // std::cout<<"surya"<<std::endl;
             l++;
             // if(start==0){
@@ -106,6 +106,7 @@ int total_exact_matched_length(std::vector<int> & submission1,std::vector<int> &
     }
     // for(ll x : patterns_matched) std::cout<<x<<" ";
     // std::cout<<std::endl;
+    std::cout<<"result "<<result<<std::endl;    
     return result;
     // std::vector<int> counted_index(l2,0);
     // int result=0;
