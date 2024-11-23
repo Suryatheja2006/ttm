@@ -10,7 +10,9 @@
 #include <condition_variable>
 #include <functional>
 #include <memory>
-typedef long long ll;
+typedef uint64_t ll;
+typedef __uint128_t vl;
+
 // You are free to add any STL includes above this comment, below the --line--.
 // DO NOT add "using namespace std;" or include any other files/libraries.
 // Also DO NOT add the include "bits/stdc++.h"
@@ -36,7 +38,7 @@ protected:
     std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> > > one_sec;
     std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> timestamp;
     // std::mutex db_mutex;
-    void check_plagiarism(std::shared_ptr<submission_t> __submission,std::vector<int> tokens);
+    void check_plagiarism(std::shared_ptr<submission_t> __submission);
     int patch_check(std::vector<int> & tokens);
     // std::thread threads;
 

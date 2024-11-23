@@ -5,8 +5,8 @@
 // docker run --rm -it -v .:/plagiarism_checker plagiarism_checker
 
 // TODO: Implement the methods of the plagiarism_checker_t class
-typedef long long ll;
-typedef __int128_t vl;
+// typedef uint64_t ll;
+// typedef __uint128_t vl;
 
 void winnowing(int w, std::vector<ll> & submission,std::vector<ll> & fingerprints){
     int minPos = -1;
@@ -285,8 +285,8 @@ int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
         }
     }
     if(l!=0) match_length+=l+chunk-1;
-    std::cout<<match_length<<std::endl;
-    if(match_length>=0) return 1;
+    // std::cout<<match_length<<std::endl;
+    if(match_length>=212) return 1;
 
     std::vector<ll> hash_large;
     hashing(tokens,dummy,hash_large,75);
@@ -299,7 +299,8 @@ int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
 
 }
 
-void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission,std::vector<int> tokens){
+void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission){
+    std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
     // std::cout<<"hello"<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(1));
     // std::cout<<"here at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
@@ -347,25 +348,25 @@ void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __subm
         __submission->professor->flag_professor(__submission);
         flagged[__submission]=true;
     }
-    std::cout<<"one_sec size "<<one_sec.size()<<std::endl;
+    // std::cout<<"one_sec size "<<one_sec.size()<<std::endl;
 
-    while((!one_sec.empty()) && (std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[one_sec.front().first]).count()>2000)){
-        std::cout<<"submission : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission].time_since_epoch()).count()<<std::endl;
-        std::cout<<"front : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[one_sec.front().first].time_since_epoch()).count()<<std::endl;
+    while((!one_sec.empty()) && (std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[one_sec.front().first]).count()>1000)){
+        // std::cout<<"submission : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission].time_since_epoch()).count()<<std::endl;
+        // std::cout<<"front : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[one_sec.front().first].time_since_epoch()).count()<<std::endl;
         
-        std::cout<<"popping"<<std::endl;
+        // std::cout<<"popping"<<std::endl;
         one_sec.pop();
     }
     std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> > > copy=one_sec;
-    std::cout<<"one_sec size"<<one_sec.size()<<std::endl;
+    // std::cout<<"one_sec size"<<one_sec.size()<<std::endl;
     while(!copy.empty()){
         if(flagging(tokens,copy.front().second)==1){
-            if(!flagged[__submission] || true){
+            if(!flagged[__submission]){
                 __submission->student->flag_student(__submission);
                 __submission->professor->flag_professor(__submission);
             }
-            if(!flagged[copy.front().first] || true){
-                std::cout<<"surya"<<std::endl;
+            if(!flagged[copy.front().first]){
+                // std::cout<<"surya"<<std::endl;
                 copy.front().first->student->flag_student(copy.front().first);
                 copy.front().first->professor->flag_professor(copy.front().first);
             }
@@ -399,9 +400,9 @@ void plagiarism_checker_t::add_submission(std::shared_ptr<submission_t> __submis
         // hashing(tokens,database_2[__submission],15);
         // std::cout<<tokens.size()<<" "<<database_1[__submission].size()<<" "<<database_2[__submission].size()<<std::endl;
     }
-    std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
+    // std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
     // cv.notify_one();
-    add_task([this, __submission,tokens]() { plagiarism_checker_t::check_plagiarism(__submission,tokens); });
+    add_task([this, __submission]() { plagiarism_checker_t::check_plagiarism(__submission); });
 
     // plagiarism_checker_t::check_plagiarism(__submission);
 
