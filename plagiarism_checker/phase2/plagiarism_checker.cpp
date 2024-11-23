@@ -27,11 +27,11 @@ void winnowing(int w, std::vector<ll> & submission,std::vector<ll> & fingerprint
     
 }
 
-void hashing(std::vector<int> & submission,std::unordered_map<ll,int> & hash_map,int chunk){
+void hashing(std::vector<int> & submission,std::unordered_set<ll> & hash_map,std::vector<ll> &hash,int chunk){
     int length=submission.size();
     // std::cout<<"surya "<<length<<" "<<chunk<<std::endl;
     if(chunk>length) return;
-    std::vector<ll> hash(length-chunk+1);
+    hash=std::vector<ll>(length-chunk+1);
     int prime=31;
     ll modulo=(1LL<<61)-1;
 
@@ -54,7 +54,7 @@ void hashing(std::vector<int> & submission,std::unordered_map<ll,int> & hash_map
     // winnowing(10,hash,winnowed_hash);
     for(ll x : hash){
         // std::cout<<x<<" ";
-        hash_map[x]++;
+        hash_map.insert(x);
     }
     // std::cout<<std::endl;
     return;
@@ -68,10 +68,11 @@ plagiarism_checker_t::plagiarism_checker_t(std::vector<std::shared_ptr<submissio
         timestamp[i]=std::chrono::time_point<std::chrono::high_resolution_clock>{};
         tokenizer_t tokenizer(i->codefile);
         std::vector<int> tokens=tokenizer.get_tokens();
-        database_1[i]=tokens;
-        hashing(tokens,database_2[i],15);
+        // database_1[i]=tokens;
+        std::vector<ll> dummy;
+        hashing(tokens,database,dummy,15);
         // std::cout<<tokens.size()<<" "<<database_1[i].size()<<" "<<database_2[i].size()<<std::endl;
-
+        hashing(tokens,database_large,dummy,75);
         // flagged[i]=false;
     }
     stop=false;
@@ -92,8 +93,8 @@ plagiarism_checker_t::~plagiarism_checker_t(void){
     // // if(threads.joinable()) threads.join();
     
     timestamp.clear();
-    database_1.clear();
-    database_2.clear();
+    database.clear();
+    // database_2.clear();
 }
 void plagiarism_checker_t::worker_thread() {
     while (true) {
@@ -234,51 +235,150 @@ int flagging(std::vector<int> & submission1,std::vector<int> & submission2){
 
 //     return 0;
 // }
+ll new_hashing(std::vector<int> & pattern){
+    int prime=31;
+    ll modulo=(1LL<<61)-1;
+    ll hv=0;
+    ll pow=1;
+    for(int x : pattern){
+        hv=(hv+((vl)pow*(vl)x)%modulo)%modulo;
+        pow=((vl)pow*(vl)prime)%modulo;
+    }
+    return hv;
+}
+int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
+    std::vector<ll> hash;
+    
+    std::unordered_set<ll> dummy;
+    // std::cout<<"here "<<tokens.size()<<std::endl;
+    hashing(tokens,dummy,hash,15);
+    // std::unordered_set<ll> local_database;
+    // {
 
-void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission){
+    // }
+    std::unordered_set<ll> patterns_matched;
+    int match_length=0;
+    int l=0;
+    int start=0;
+    std::vector<int> pattern;
+    int chunk=15;
+    for(int i=0;i<hash.size();i++){
+        // std::cout<<"there "<<i<<" "<<hash.size()<<std::endl;
+        
+        if(database.contains(hash[i])){
+            // std::cout<<"surya"<<std::endl;
+            l++;
+            if(start==0){
+                for(int j=0;j<15;j++) pattern.push_back(tokens[i+j]);
+                start=1;
+            }
+            else pattern.push_back(tokens[i+14]);
+        }
+        else if(l!=0){
+            ll hv=new_hashing(pattern);
+            if(!patterns_matched.contains(hv)) match_length+=l+chunk-1;
+
+            patterns_matched.insert(hv);
+            l=0;
+            start=0;
+            pattern.clear();
+        }
+    }
+    if(l!=0) match_length+=l+chunk-1;
+    std::cout<<match_length<<std::endl;
+    if(match_length>=0) return 1;
+
+    std::vector<ll> hash_large;
+    hashing(tokens,dummy,hash_large,75);
+    for(int x : hash_large){
+        if(database_large.contains(x)) return 1;
+    }
+
+    return 0;
+
+
+}
+
+void plagiarism_checker_t::check_plagiarism(std::shared_ptr<submission_t> __submission,std::vector<int> tokens){
     // std::cout<<"hello"<<std::endl;
     // std::this_thread::sleep_for(std::chrono::seconds(1));
     // std::cout<<"here at "<<std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())<<std::endl;
-    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int>> local_database_1;
-    std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > local_database_2;
+    // std::unordered_map<std::shared_ptr<submission_t>,std::vector<int>> local_database_1;
+    // std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > local_database_2;
     std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> local_timestamp;
     // std::unordered_map<std::shared_ptr<submission_t>,bool> local_flagged;
     {
     //     // Lock to safely copy shared resources
         std::lock_guard<std::mutex> lock(queue_mutex);
-        local_database_1 = database_1;  // Make local copies to reduce lock contention
-        local_database_2 = database_2;
+        // local_database_1 = database_1;  // Make local copies to reduce lock contention
+        // local_database_2 = database_2;
         local_timestamp = timestamp;
         // local_flagged = flagged;
     //     return;
     }
     // cv.notify_one();
-    for(auto i : local_database_1){
-        if((i.first!=__submission) && (local_timestamp[i.first]<=local_timestamp[__submission])){
-            if(((!flagged[__submission]) || ((std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000) && (!flagged[i.first]))) && (flagging(i.second,local_database_1[__submission])==1)){
-                if(!flagged[__submission]){
-                    // std::cout<<local_timestamp[__submission]<<std::endl;
-                    __submission->student->flag_student(__submission);
-                    __submission->professor->flag_professor(__submission);
-                    flagged[__submission]=true;
-                }
+    // for(auto i : local_database_1){
+    //     if((i.first!=__submission) && (local_timestamp[i.first]<=local_timestamp[__submission])){
+    //         if(((!flagged[__submission]) || ((std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000) && (!flagged[i.first]))) && (flagging(i.second,local_database_1[__submission])==1)){
+    //             if(!flagged[__submission]){
+    //                 // std::cout<<local_timestamp[__submission]<<std::endl;
+    //                 __submission->student->flag_student(__submission);
+    //                 __submission->professor->flag_professor(__submission);
+    //                 flagged[__submission]=true;
+    //             }
 
-                if(std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000){
-                    if(!flagged[i.first]){
-                        // std::cout<<"previous one"<<std::endl;
-                        i.first->student->flag_student(i.first);
-                        i.first->professor->flag_professor(i.first);
-                        flagged[i.first]=true;
-                    }
-                }
+    //             if(std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[i.first]).count()<1000){
+    //                 if(!flagged[i.first]){
+    //                     // std::cout<<"previous one"<<std::endl;
+    //                     i.first->student->flag_student(i.first);
+    //                     i.first->professor->flag_professor(i.first);
+    //                     flagged[i.first]=true;
+    //                 }
+    //             }
                 
+    //         }
+    //     }
+    // }
+    
+    // return;
+
+    if(patch_check(tokens)==1){
+        __submission->student->flag_student(__submission);
+        __submission->professor->flag_professor(__submission);
+        flagged[__submission]=true;
+    }
+    std::cout<<"one_sec size "<<one_sec.size()<<std::endl;
+
+    while((!one_sec.empty()) && (std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission]-local_timestamp[one_sec.front().first]).count()>2000)){
+        std::cout<<"submission : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[__submission].time_since_epoch()).count()<<std::endl;
+        std::cout<<"front : "<<std::chrono::duration_cast<std::chrono::milliseconds>(local_timestamp[one_sec.front().first].time_since_epoch()).count()<<std::endl;
+        
+        std::cout<<"popping"<<std::endl;
+        one_sec.pop();
+    }
+    std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> > > copy=one_sec;
+    std::cout<<"one_sec size"<<one_sec.size()<<std::endl;
+    while(!copy.empty()){
+        if(flagging(tokens,copy.front().second)==1){
+            if(!flagged[__submission] || true){
+                __submission->student->flag_student(__submission);
+                __submission->professor->flag_professor(__submission);
+            }
+            if(!flagged[copy.front().first] || true){
+                std::cout<<"surya"<<std::endl;
+                copy.front().first->student->flag_student(copy.front().first);
+                copy.front().first->professor->flag_professor(copy.front().first);
             }
         }
-    }
-    
-    return;
-    // std::cout<<"there"<<std::endl;
+        copy.pop();
 
+    }
+
+    one_sec.push(std::make_pair(__submission,tokens));
+    // std::cout<<"there"<<std::endl;
+    std::vector<ll> dummy;
+    hashing(tokens,database,dummy,15);
+    hashing(tokens,database_large,dummy,75);
 }
 
 // std::shared_ptr<plagiarism_checker_t> plagiarism_checker_t::shared_from_this(){
@@ -294,14 +394,14 @@ void plagiarism_checker_t::add_submission(std::shared_ptr<submission_t> __submis
         std::lock_guard<std::mutex> lock(queue_mutex);
         timestamp[__submission]=std::chrono::high_resolution_clock::now();
         // std::cout<<timestamp[__submission]<<std::endl;
-        std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
         // hashing(tokens,database_1[__submission],75);
-        database_1[__submission]=tokens;
-        hashing(tokens,database_2[__submission],15);
+        // database_1[__submission]=tokens;
+        // hashing(tokens,database_2[__submission],15);
         // std::cout<<tokens.size()<<" "<<database_1[__submission].size()<<" "<<database_2[__submission].size()<<std::endl;
     }
+    std::vector<int> tokens=tokenizer_t(__submission->codefile).get_tokens();
     // cv.notify_one();
-    add_task([this, __submission]() { plagiarism_checker_t::check_plagiarism(__submission); });
+    add_task([this, __submission,tokens]() { plagiarism_checker_t::check_plagiarism(__submission,tokens); });
 
     // plagiarism_checker_t::check_plagiarism(__submission);
 

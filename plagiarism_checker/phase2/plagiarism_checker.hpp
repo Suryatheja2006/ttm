@@ -4,6 +4,7 @@
 #include<chrono>
 #include<mutex>
 #include<unordered_map>
+#include<unordered_set>
 #include<map>
 #include <queue>
 #include <condition_variable>
@@ -28,11 +29,15 @@ public:
 protected:
     // TODO: Add members and function signatures here
     std::unordered_map<std::shared_ptr<submission_t>,bool> flagged;
-    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database_1;
-    std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_2;
+    // std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database_1;
+    // std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_2;
+    std::unordered_set<ll> database;
+    std::unordered_set<ll> database_large;
+    std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> > > one_sec;
     std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> timestamp;
     // std::mutex db_mutex;
-    void check_plagiarism(std::shared_ptr<submission_t> __submission);
+    void check_plagiarism(std::shared_ptr<submission_t> __submission,std::vector<int> tokens);
+    int patch_check(std::vector<int> & tokens);
     // std::thread threads;
 
     std::thread worker; // Single worker thread
