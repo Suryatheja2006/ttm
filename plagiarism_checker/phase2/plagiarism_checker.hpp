@@ -34,8 +34,10 @@ protected:
     // std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > database_1;
     // std::unordered_map<std::shared_ptr<submission_t>,std::unordered_map<ll,int> > database_2;
     std::unordered_set<ll> database;
+
     std::unordered_set<ll> database_large;
-    std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> > > one_sec;
+    std::unordered_map<std::shared_ptr<submission_t>,std::vector<int> > prev_tokens;
+    std::queue<std::pair<std::shared_ptr<submission_t>,std::vector<int> >> one_sec;
     std::unordered_map<std::shared_ptr<submission_t>, std::chrono::time_point<std::chrono::high_resolution_clock>> timestamp;
     // std::mutex db_mutex;
     void check_plagiarism(std::shared_ptr<submission_t> __submission);
