@@ -59,7 +59,7 @@ void winnowing(int w, std::vector<ll> & submission,std::vector<ll> & fingerprint
     for(int i = 0; i <= submission.size() - w; i++){
         int localMinPos = i;
         for(int j = 1; j < w; j++){
-            if(submission[i + j] < submission[localMinPos]){
+            if(submission[i + j] <= submission[localMinPos]){
                 localMinPos = i + j;
             }
         }
@@ -79,17 +79,17 @@ void hashing(std::vector<int> & submission,std::unordered_set<ll> & hash_map,std
     hash=std::vector<ll>(length-chunk+1);
     for(int i=0;i<length-chunk+1;i++){
         if(chunk==15){
-            ll a[15];
+            int a[15];
             for(int j=0;j<chunk;j++){
                 a[j]=submission[i+j];
-                hash[i]=MurmurHash64A(a,chunk,42);
+                hash[i]=MurmurHash64A(a,chunk*4,98765);
         }
         }
         if(chunk==75){
-            ll a[75];
+            int a[75];
             for(int j=0;j<chunk;j++){
                 a[j]=submission[i+j];
-                hash[i]=MurmurHash64A(a,chunk,42);
+                hash[i]=MurmurHash64A(a,chunk*4,98765);
         }
         }
     }
@@ -111,12 +111,13 @@ void hashing(std::vector<int> & submission,std::unordered_set<ll> & hash_map,std
     //     hash[i]=(hash[i]+(ll)submission[i+chunk-1])%modulo;
     //     // if(hash[i]<0) std::cout<<"surya"<<std::endl;
     // }
-    // std::vector<ll> winnowed_hash;
-    // // winnowing(10,hash,winnowed_hash);
-    // for(ll x : hash){
-    //     // std::cout<<x<<" ";
-    //     hash_map.insert(x);
-    // }
+    std::vector<ll> winnowed_hash;
+    winnowing(4,hash,winnowed_hash);
+    hash=winnowed_hash;
+    for(ll x : hash){
+        // std::cout<<x<<" ";
+        hash_map.insert(x);
+    }
     // std::cout<<std::endl;
     return;
 }
@@ -185,90 +186,212 @@ void plagiarism_checker_t::add_task(std::function<void()> task) {
     // worker.detach();
 }
 
-int flagging(std::vector<int> & submission1,std::vector<int> & submission2){
-    int l1=submission1.size();
-    int l2=submission2.size();
-    // std::cout<<l1<<" "<<l2<<std::endl;
-    // submission1=std::vector<int> (10000);
-    // submission2=std::vector<int> (10000);
-    // for(int i=0;i<10000;i++){
-    //     submission1[i]=i+1;
-    //     submission2[i]=i+10001;
-    // }
-    std::vector<int> counted_index(l2,0);
-    int result=0;
-    for(int i=0;i<l1;i++){
-        // position and max matched length for this index i in the second vector
-        int pos_j=-1;
-        int max_length=0; 
+// int flagging(std::vector<int> & submission1,std::vector<int> & submission2){
+//     int l1=submission1.size();
+//     int l2=submission2.size();
+//     // std::cout<<l1<<" "<<l2<<std::endl;
+//     // submission1=std::vector<int> (10000);
+//     // submission2=std::vector<int> (10000);
+//     // for(int i=0;i<10000;i++){
+//     //     submission1[i]=i+1;
+//     //     submission2[i]=i+10001;
+//     // }
+//     std::vector<int> counted_index(l2,0);
+//     int result=0;
+//     for(int i=0;i<l1;i++){
+//         // position and max matched length for this index i in the second vector
+//         int pos_j=-1;
+//         int max_length=0; 
 
-        for(int j=0;j<l2;j++){
-            // vars to store initial values
-            int pi=i,pj=j; 
-            int length=0;
-            while(i<l1 && j<l2 && (submission1[i]==submission2[j])){
-                length++;
-                i++;
-                j++;
-            }
-            if(length>max_length){
-                pos_j=pj;
-                max_length=length;
-            }
-            if(length>=75) return 1;
-            // if(length>=15) result++;
+//         for(int j=0;j<l2;j++){
+//             // vars to store initial values
+//             int pi=i,pj=j; 
+//             int length=0;
+//             while(i<l1 && j<l2 && (submission1[i]==submission2[j])){
+//                 length++;
+//                 i++;
+//                 j++;
+//             }
+//             if(length>max_length){
+//                 pos_j=pj;
+//                 max_length=length;
+//             }
+//             if(length>=75) return 1;
+//             // if(length>=15) result++;
 
-            // if(result>=10) return 1;
-            i=pi;
-            j=pj;
-        }
-        // if(max_length>=75) return 1;
-        if(max_length>=15){
-            for(int a=i,b=pos_j;a<i+max_length && b<pos_j+max_length;a++,b++){
-                if(counted_index[b]==0){
-                    result++;
-                    counted_index[b]=1;
-                }
-            }
-            // result++;
-            // we are not visiting the indices of first vector which are already counted above
-            i=i+max_length-1;
-        } 
-        if(result>=150) return 1;
+//             // if(result>=10) return 1;
+//             i=pi;
+//             j=pj;
+//         }
+//         // if(max_length>=75) return 1;
+//         if(max_length>=15){
+//             for(int a=i,b=pos_j;a<i+max_length && b<pos_j+max_length;a++,b++){
+//                 if(counted_index[b]==0){
+//                     result++;
+//                     counted_index[b]=1;
+//                 }
+//             }
+//             // result++;
+//             // we are not visiting the indices of first vector which are already counted above
+//             i=i+max_length-1;
+//         } 
+//         if(result>=150) return 1;
+//     }
+//     return 0;
+
+//     // std::unordered_map<ll,int> hash_1,hash_2;
+//     // if(l1>=75 && l2>=75){
+//     //     hashing(submission1,hash_1,75);
+//     //     hashing(submission2,hash_2,75);
+//     //     for(auto i : hash_1){
+//     //         if(hash_2.contains(i.first)){
+//     //             // std::cout<<i.first<<" "<<hash_1[i.first]<<" "<<hash_2[i.first]<<std::endl;
+//     //             // std::cout<<"here"<<std::endl;
+//     //             return 1;
+//     //         }
+//     //     }
+//     // }
+//     // hash_1.clear();
+//     // hash_2.clear();
+//     // hashing(submission1,hash_1,15);
+//     // hashing(submission2,hash_2,15);
+//     // int count=0;
+//     // for(auto i : hash_1){
+//     //     if(hash_2.contains(i.first)){
+//     //         // std::cout<<"atleast once"<<std::endl;
+//     //         count+=hash_1[i.first]*hash_2[i.first];
+//     //     }
+//     //     if(count>=10){
+//     //         // std::cout<<"there"<<std::endl;
+//     //         return 1;
+//     //     }
+//     // }
+//     // // std::cout<<count<<std::endl;
+//     // return 0;
+// }
+std::map<int, std::vector<int>> hash_text(std::vector<int> text)
+{
+    std::map<int, std::vector<int>> hash_map;
+
+    int n = text.size();
+    int p = 5381, d = 33;
+    int h = 1;
+
+    for (int i = 0; i < 10 - 1; i++) h = (h * d) % p;
+
+    int t = 0;
+    for (int i = 0; i < 10; i++) t = (d * t + text[i]) % p;
+
+    if (hash_map.find(t) == hash_map.end()) hash_map[t] = {0};
+    else hash_map[t].push_back(0);
+
+    // Uses rolling hash function for hash computation efficiency
+    for (int i = 1; i < n - 10; i++){
+        t = (d * (t - text[i - 1] * h) + text[i + 9]) % p;
+        if (t < 0) t = t + p;
+        if (hash_map.find(t) == hash_map.end()) hash_map[t] = {i};
+        else hash_map[t].push_back(i);
     }
-    return 0;
 
-    // std::unordered_map<ll,int> hash_1,hash_2;
-    // if(l1>=75 && l2>=75){
-    //     hashing(submission1,hash_1,75);
-    //     hashing(submission2,hash_2,75);
-    //     for(auto i : hash_1){
-    //         if(hash_2.contains(i.first)){
-    //             // std::cout<<i.first<<" "<<hash_1[i.first]<<" "<<hash_2[i.first]<<std::endl;
-    //             // std::cout<<"here"<<std::endl;
-    //             return 1;
-    //         }
-    //     }
-    // }
-    // hash_1.clear();
-    // hash_2.clear();
-    // hashing(submission1,hash_1,15);
-    // hashing(submission2,hash_2,15);
-    // int count=0;
-    // for(auto i : hash_1){
-    //     if(hash_2.contains(i.first)){
-    //         // std::cout<<"atleast once"<<std::endl;
-    //         count+=hash_1[i.first]*hash_2[i.first];
-    //     }
-    //     if(count>=10){
-    //         // std::cout<<"there"<<std::endl;
-    //         return 1;
-    //     }
-    // }
-    // // std::cout<<count<<std::endl;
-    // return 0;
+    return hash_map;
 }
 
+// returns hash values of the pattern
+// Hash computation is inspired from GeeksForGeeks - "https://www.geeksforgeeks.org/rabin-karp-algorithm-for-pattern-searching/"
+std::vector<int> hash_pattern(std::vector<int> &pattern)
+{
+    int k=10;
+    int m = pattern.size();
+    int h = 1;
+    int p = 5381, d = 33;
+    std::vector<int> hashes(m - k + 1);
+
+    for (int i = 0; i < 10 - 1; i++) h = (h * d) % p;
+
+    int t = 0;
+    for (int i = 0; i < 10; i++) t = (d * t + pattern[i]) % p;
+
+    hashes[0] = t;
+    // Uses rolling hash function for hash computation efficiency
+    for (int i = 1; i < m - 10; i++){
+        t = (d * (t - pattern[i - 1] * h) + pattern[i + 9]) % p;
+        if (t < 0)
+            t = t + p;
+        hashes[i] = t;
+    }
+    // std::vector<int> winnowed_hash;
+    // winnowing(4,hashes,winnowed_hash);
+    // hashes=winnowed_hash;
+    return hashes;
+}
+
+// returns the length of the exact match
+int flagging(std::vector<int> &text, std::vector<int> &pattern)
+{
+    int k=10;
+    // calls the hash functions
+    std::map<int, std::vector<int>> text_hash = hash_text(text);
+    std::vector<int> pattern_hash = hash_pattern(pattern);
+    int p = pattern.size();
+    int t = text.size();
+
+    std::vector<bool> visited(t, false);
+
+    int hashp;
+    int total_length = 0;
+
+    // iterates over the pattern index by index if there is no match
+    for (int i = 0; i < p - k; i++)
+    {   
+        // matches the hash value of pattern and text
+        hashp = pattern_hash[i];
+        if (text_hash.find(hashp) != text_hash.end())
+        {
+            std::vector<int> indices = text_hash[hashp];
+            int max = k;
+            int index = -1;
+
+            // runs for maximum match length over each match of hash value
+            for (auto j : indices)
+            {
+                int len = k;
+                bool ismatch = true;
+
+                // checks for feasible matches (considering overlap conditions)
+                for (int z = 0; z < 10; z++)
+                {
+                    if (text[j + z] != pattern[i + z]) ismatch = false;
+                    if (visited[j + z] == true) ismatch = false;
+                    if(ismatch == false) break;
+                }
+                
+                // if match is feasible, checks for further indices 
+                if(ismatch){
+                    while ((j + len < t) && (text[j + len] == pattern[i + len]) && !(visited[j + len]))
+                    {
+                        len++;
+                        if (len == 20)
+                            break;
+                    }
+
+                    if ((max <= len))
+                    {
+                        max = len;
+                        index = j;
+                    }
+                }   
+            }
+            // Updates if the feasible match has maximum length and adds to the total_length
+            if (index != -1)
+            {
+                for (int y = 0; y < max; y++) visited[index + y] = true;
+                total_length = total_length + max;
+                i = i + max - 1;
+            }
+        }
+    }
+    return total_length;
+}
 // int flagging(std::unordered_map<ll,int> ld11,std::unordered_map<ll,int> ld12,std::unordered_map<ll,int> ld21, std::unordered_map<ll,int> ld22){
     
 //     if(!ld11.empty() && !ld21.empty()){
@@ -325,6 +448,8 @@ int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
     std::unordered_set<ll> visited_hashes;
     std::vector<ll> visited_hash;
     int chunk=15;
+    int count=0;
+    // std::cout<<"database "<<database.size()<<std::endl;
     for(int i=0;i<hash.size();i++){
         // std::cout<<"there "<<i<<" "<<hash.size()<<std::endl;
         
@@ -343,17 +468,21 @@ int plagiarism_checker_t::patch_check(std::vector<int>& tokens){
             // if(!patterns_matched.contains(hv)) match_length+=l+chunk-1;
 
             // patterns_matched.insert(hv);
-            l=0;
             match_length+=l+chunk-1;
+            count++;
             for(int x : visited_hash) visited_hashes.insert(x);
             visited_hash.clear();
+            l=0;
             // start=0;
             // pattern.clear();
         }
     }
-    if(l!=0) match_length+=l+chunk-1;
-    // std::cout<<match_length<<std::endl;
-    if(match_length>=272) return 1;
+    if(l!=0){
+        match_length+=l+chunk-1;
+        count++;
+    }
+    std::cout<<match_length<<" "<<count<<std::endl;
+    if(match_length>=0) return 1;
 
     std::vector<ll> hash_large;
     hashing(tokens,dummy,hash_large,75);
