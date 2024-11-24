@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
 // You should NOT modify ANYTHING in this file.
 
 void student_t::flag_student(std::shared_ptr<submission_t> __submission) {
@@ -99,10 +98,11 @@ void testcase::execute_testcase(std::string __test_dir) {
         submission->student = testcase::students[student_name];
         submission->professor = testcase::professors[prof_name];
         submission->codefile = testcase::test_dir + "/" + code_file + ".cpp";
+        // std::cout<<"submission time : "<<std::chrono::high_resolution_clock::now()<<std::endl;
         checker.add_submission(submission);
         old_timestamp = timestamp;
+
     }
-    // usleep(3*1000000);
     in.close();
 }
 
